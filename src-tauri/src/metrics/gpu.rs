@@ -40,11 +40,19 @@ impl GpuInfo {
         let nvml = self.nvml.as_ref()?;
         let device = nvml.device_by_index(0).ok()?;
 
+        let util = device.utilization_rates().ok()?;
+        let mem = device.memory_info().ok()?;
+
+        // Temperature requires specifying the sensor
+        let temp = device
+            .temperature(nvml_wrapper::enum_wrappers::device::TemperatureSensor::Gpu)
+            .ok();
+
         Some(NvidiaGpuMetrics {
-            utilization: device.utilization_rates().ok()?.gpu,
-            memory_used: device.memory_info()?.used,
-            memory_total: device.memory_info()?.total,
-            temperature: device.temperature().ok()?,
+            utilization: util.gpu,
+            memory_used: mem.used,
+            memory_total: mem.total,
+            temperature: temp.unwrap_or(0) as i32,
         })
     }
 }

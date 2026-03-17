@@ -17,7 +17,7 @@ impl NetworkInfo {
     }
 
     pub fn speeds(&mut self) -> (u64, u64) {
-        self.networks.refresh(true);
+        self.networks.refresh();
         let mut total_rx = 0u64;
         let mut total_tx = 0u64;
 
@@ -36,7 +36,7 @@ impl NetworkInfo {
     }
 
     pub fn total(&mut self) -> (u64, u64) {
-        self.networks.refresh(true);
+        self.networks.refresh();
         let mut total_rx = 0u64;
         let mut total_tx = 0u64;
 

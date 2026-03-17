@@ -11,7 +11,7 @@ impl DiskInfo {
     }
 
     pub fn partitions(&mut self) -> Vec<DiskPartition> {
-        self.disks.refresh(true);
+        self.disks.refresh();
         self.disks
             .iter()
             .map(|d| DiskPartition {

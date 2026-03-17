@@ -11,7 +11,7 @@ impl TemperatureInfo {
     }
 
     pub fn get_cpu_temp(&mut self) -> Option<f32> {
-        self.components.refresh(true);
+        self.components.refresh();
         for component in self.components.iter() {
             if component.label().to_lowercase().contains("cpu")
                 || component.label().to_lowercase().contains("core")
