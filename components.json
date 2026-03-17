@@ -1,0 +1,16 @@
+{
+  "$schema": "https://shadcn-svelte.com/schema.json",
+  "style": "new-york",
+  "baseColor": "slate",
+  "cssVariables": true,
+  "prefix": "",
+  "tailwind": {
+    "config": "tailwind.config.js",
+    "css": "src/app.css",
+    "utils": "src/lib/utils"
+  },
+  "aliases": {
+    "components": "$lib/components",
+    "utils": "$lib/utils"
+  }
+}
