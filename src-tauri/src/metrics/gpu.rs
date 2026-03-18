@@ -33,7 +33,15 @@ impl GpuInfo {
     }
 
     fn detect_intel() -> bool {
-        std::path::Path::new("/sys/class/drm/card1/device").exists()
+        for i in 0..10 {
+            let vendor_path = format!("/sys/class/drm/card{}/device/vendor", i);
+            if let Ok(content) = std::fs::read_to_string(&vendor_path) {
+                if content.trim() == "0x8086" {
+                    return true;
+                }
+            }
+        }
+        false
     }
 
     pub fn nvidia_metrics(&self) -> Option<NvidiaGpuMetrics> {

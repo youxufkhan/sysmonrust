@@ -1,7 +1,8 @@
 use serde::Serialize;
+use std::sync::Mutex;
 pub mod metrics;
 pub mod tray;
-use metrics::{CpuInfo, DiskInfo, GpuInfo, MemoryInfo, NetworkInfo, TemperatureInfo};
+use metrics::{CpuInfo, DiskInfo, MemoryInfo, NetworkInfo, TemperatureInfo};
 
 #[derive(Serialize)]
 pub struct SystemMetrics {
@@ -60,40 +61,94 @@ pub struct TemperatureMetrics {
     pub cpu: f32,
 }
 
-#[tauri::command]
-fn get_system_metrics() -> SystemMetrics {
-    let mut cpu = CpuInfo::new();
-    let mut memory = MemoryInfo::new();
-    let mut network = NetworkInfo::new();
-    let mut disk = DiskInfo::new();
-    let gpu = GpuInfo::new();
-    let mut temp = TemperatureInfo::new();
+/// Application state holding persistent metric instances
+pub struct AppState {
+    pub cpu: Mutex<CpuInfo>,
+    pub memory: Mutex<MemoryInfo>,
+    pub network: Mutex<NetworkInfo>,
+    pub disk: Mutex<DiskInfo>,
+    pub temp: Mutex<TemperatureInfo>,
+}
 
+impl AppState {
+    pub fn new() -> Self {
+        let mut cpu = CpuInfo::new();
+        std::thread::sleep(std::time::Duration::from_millis(200));
+        cpu.refresh_for_delta();
+
+        Self {
+            cpu: Mutex::new(cpu),
+            memory: Mutex::new(MemoryInfo::new()),
+            network: Mutex::new(NetworkInfo::new()),
+            disk: Mutex::new(DiskInfo::new()),
+            temp: Mutex::new(TemperatureInfo::new()),
+        }
+    }
+}
+
+#[tauri::command]
+fn get_system_metrics(state: tauri::State<'_, Mutex<AppState>>) -> SystemMetrics {
+    let state = state.lock().unwrap();
+
+    // CPU metrics - collect all before dropping lock
+    let (global, per_core, frequency) = {
+        let mut cpu = state.cpu.lock().unwrap();
+        (cpu.global_usage(), cpu.per_core_usage(), cpu.frequency())
+    };
+
+    // Memory metrics
+    let (total, used, available, swap_total, swap_used) = {
+        let mut mem = state.memory.lock().unwrap();
+        (
+            mem.total_ram(),
+            mem.used_ram(),
+            mem.available_ram(),
+            mem.total_swap(),
+            mem.used_swap(),
+        )
+    };
+
+    // Network metrics
+    let (rx_speed, tx_speed, total_rx, total_tx) = {
+        let mut net = state.network.lock().unwrap();
+        let (rx, tx) = net.speeds();
+        let (trx, ttx) = net.total();
+        (rx, tx, trx, ttx)
+    };
+
+    // Disk metrics
+    let disk_list = {
+        let mut disk = state.disk.lock().unwrap();
+        disk.partitions()
+    };
+
+    // Temperature
+    let temp = {
+        let mut t = state.temp.lock().unwrap();
+        t.get_cpu_temp()
+    };
+
+    // Build response
     SystemMetrics {
         cpu: CpuMetrics {
-            global: cpu.global_usage(),
-            per_core: cpu.per_core_usage(),
-            frequency: cpu.frequency(),
+            global,
+            per_core,
+            frequency,
         },
         memory: MemoryMetrics {
-            total: memory.total_ram(),
-            used: memory.used_ram(),
-            available: memory.available_ram(),
-            swap_total: memory.total_swap(),
-            swap_used: memory.used_swap(),
+            total,
+            used,
+            available,
+            swap_total,
+            swap_used,
         },
-        network: {
-            let (rx_speed, tx_speed) = network.speeds();
-            let (total_rx, total_tx) = network.total();
-            NetworkMetrics {
-                rx_speed,
-                tx_speed,
-                total_rx,
-                total_tx,
-            }
+        network: NetworkMetrics {
+            rx_speed,
+            tx_speed,
+            total_rx,
+            total_tx,
         },
-        disk: disk
-            .partitions()
+        disk: disk_list
             .into_iter()
             .map(|p| DiskMetrics {
                 name: p.name,
@@ -103,13 +158,14 @@ fn get_system_metrics() -> SystemMetrics {
             })
             .collect(),
         gpu: None,
-        temperature: temp.get_cpu_temp().map(|t| TemperatureMetrics { cpu: t }),
+        temperature: temp.map(|t| TemperatureMetrics { cpu: t }),
     }
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .manage(AppState::new())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             let _ = tray::setup_tray(app);
