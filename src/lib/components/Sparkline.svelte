@@ -31,6 +31,8 @@
 					grid: { show: true, stroke: 'rgba(255,255,255,0.1)', width: 1 },
 					ticks: { show: true, size: 4, stroke: 'rgba(255,255,255,0.2)' },
 					side: 1,
+					font: '11px monospace',
+					stroke: 'rgba(255,255,255,0.7)',
 					values: (u, vals) => {
 						return vals.map((v) => {
 							if (v === 0) return '0';
