@@ -2,7 +2,7 @@
   import MetricCard from './MetricCard.svelte';
   import Progress from './ui/progress.svelte';
   import Badge from './ui/badge.svelte';
-  import { metrics, historyStore } from '$lib/stores/metrics';
+  import { metrics, cpuHistory } from '$lib/stores/metrics';
   import { formatPercent, formatMHz } from '$lib/utils/formatters';
   import { getThresholdColor } from '$lib/utils/thresholds';
   import Sparkline from '$lib/components/Sparkline.svelte';
@@ -21,7 +21,7 @@
   {#if cpu}
     <div class="text-3xl font-bold">{formatPercent(cpu.global)}</div>
     <div class="mt-2">
-      <Sparkline data={historyStore.cpu} color={getThresholdColor(cpu.global)} width={120} height={40} />
+      <Sparkline data={$cpuHistory} color={getThresholdColor(cpu.global)} width={120} height={40} />
     </div>
     <div class="grid grid-cols-4 gap-2 mt-3">
       {#each cpu.per_core as coreUsage, i}

@@ -1,7 +1,7 @@
 <script lang="ts">
   import MetricCard from './MetricCard.svelte';
   import Badge from './ui/badge.svelte';
-  import { metrics, historyStore } from '$lib/stores/metrics';
+  import { metrics, networkRxHistory, networkTxHistory } from '$lib/stores/metrics';
   import { formatSpeed, formatBytes } from '$lib/utils/formatters';
   import Sparkline from '$lib/components/Sparkline.svelte';
   
@@ -20,7 +20,7 @@
         </div>
         <Badge variant="secondary">{formatSpeed(net.rx_speed)}</Badge>
       </div>
-      <Sparkline data={historyStore.networkRx} color="#22c55e" width={120} height={40} />
+      <Sparkline data={$networkRxHistory} color="#22c55e" width={120} height={40} />
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <span class="text-blue-500">↑</span>
@@ -28,7 +28,7 @@
         </div>
         <Badge variant="secondary">{formatSpeed(net.tx_speed)}</Badge>
       </div>
-      <Sparkline data={historyStore.networkTx} color="#3b82f6" width={120} height={40} />
+      <Sparkline data={$networkTxHistory} color="#3b82f6" width={120} height={40} />
       <div class="border-t pt-2 mt-2 text-sm">
         <div class="flex justify-between text-muted-foreground">
           <span>Total down</span>

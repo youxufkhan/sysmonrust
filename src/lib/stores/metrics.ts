@@ -1,4 +1,4 @@
-import { writable } from 'svelte/store';
+import { writable, get } from 'svelte/store';
 import { invoke } from '@tauri-apps/api/core';
 
 export interface CpuMetrics {
@@ -51,6 +51,15 @@ export interface SystemMetrics {
   temperature: TemperatureMetrics | null;
 }
 
+const MAX_HISTORY_POINTS = 60;
+
+export const cpuHistory = writable<number[]>([]);
+export const memoryHistory = writable<number[]>([]);
+export const networkRxHistory = writable<number[]>([]);
+export const networkTxHistory = writable<number[]>([]);
+export const diskHistory = writable<number[]>([]);
+export const gpuHistory = writable<number[]>([]);
+
 function createMetricsStore() {
   const { subscribe, set } = writable<SystemMetrics | null>(null);
   let interval: ReturnType<typeof setInterval> | null = null;
@@ -82,43 +91,32 @@ function createMetricsStore() {
 
 export const metrics = createMetricsStore();
 
-const MAX_HISTORY_POINTS = 60;
-
-export const historyStore = {
-  cpu: [] as number[],
-  memory: [] as number[],
-  networkRx: [] as number[],
-  networkTx: [] as number[],
-  disk: [] as number[],
-  gpu: [] as number[],
-};
-
-export function pushHistory(store: number[], value: number) {
-  if (store.length >= MAX_HISTORY_POINTS) {
-    store.shift();
-  }
-  store.push(value);
-}
-
 function updateHistory(metrics: SystemMetrics) {
-  pushHistory(historyStore.cpu, metrics.cpu.global);
+  const cpu = get(cpuHistory);
+  cpuHistory.set([...cpu.slice(-(MAX_HISTORY_POINTS - 1)), metrics.cpu.global]);
   
   const memUsedPct = metrics.memory.total > 0
     ? (metrics.memory.used / metrics.memory.total) * 100
     : 0;
-  pushHistory(historyStore.memory, memUsedPct);
+  const mem = get(memoryHistory);
+  memoryHistory.set([...mem.slice(-(MAX_HISTORY_POINTS - 1)), memUsedPct]);
   
-  pushHistory(historyStore.networkRx, metrics.network.rx_speed);
-  pushHistory(historyStore.networkTx, metrics.network.tx_speed);
+  const rx = get(networkRxHistory);
+  networkRxHistory.set([...rx.slice(-(MAX_HISTORY_POINTS - 1)), metrics.network.rx_speed]);
+  
+  const tx = get(networkTxHistory);
+  networkTxHistory.set([...tx.slice(-(MAX_HISTORY_POINTS - 1)), metrics.network.tx_speed]);
   
   if (metrics.disk.length > 0) {
     const diskUsedPct = metrics.disk[0].total > 0
       ? (metrics.disk[0].used / metrics.disk[0].total) * 100
       : 0;
-    pushHistory(historyStore.disk, diskUsedPct);
+    const disk = get(diskHistory);
+    diskHistory.set([...disk.slice(-(MAX_HISTORY_POINTS - 1)), diskUsedPct]);
   }
   
   if (metrics.gpu) {
-    pushHistory(historyStore.gpu, metrics.gpu.utilization);
+    const gpu = get(gpuHistory);
+    gpuHistory.set([...gpu.slice(-(MAX_HISTORY_POINTS - 1)), metrics.gpu.utilization]);
   }
 }

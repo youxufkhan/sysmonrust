@@ -1,7 +1,7 @@
 <script lang="ts">
   import MetricCard from './MetricCard.svelte';
   import Progress from './ui/progress.svelte';
-  import { metrics, historyStore } from '$lib/stores/metrics';
+  import { metrics, memoryHistory } from '$lib/stores/metrics';
   import { formatBytes, formatPercent } from '$lib/utils/formatters';
   import { getThresholdColor } from '$lib/utils/thresholds';
   import Sparkline from '$lib/components/Sparkline.svelte';
@@ -18,7 +18,7 @@
   {#if mem}
     <div class="text-3xl font-bold">{formatPercent(memPercent)}</div>
     <div class="mt-2">
-      <Sparkline data={historyStore.memory} color={getThresholdColor(memPercent)} width={120} height={40} />
+      <Sparkline data={$memoryHistory} color={getThresholdColor(memPercent)} width={120} height={40} />
     </div>
     <div class="mt-3">
       <Progress value={memPercent} class="mb-3" />

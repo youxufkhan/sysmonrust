@@ -1,7 +1,7 @@
 <script lang="ts">
   import MetricCard from './MetricCard.svelte';
   import Progress from './ui/progress.svelte';
-  import { metrics, historyStore } from '$lib/stores/metrics';
+  import { metrics, diskHistory } from '$lib/stores/metrics';
   import { formatBytes, formatPercent } from '$lib/utils/formatters';
   import { getThresholdColor } from '$lib/utils/thresholds';
   import Sparkline from '$lib/components/Sparkline.svelte';
@@ -17,7 +17,7 @@
     {@const usedPercent = (disks[0].used / disks[0].total) * 100}
     <div class="text-3xl font-bold">{formatPercent(usedPercent)}</div>
     <div class="mt-2">
-      <Sparkline data={historyStore.disk} color={getThresholdColor(usedPercent)} width={120} height={40} />
+      <Sparkline data={$diskHistory} color={getThresholdColor(usedPercent)} width={120} height={40} />
     </div>
     <div class="space-y-3 mt-3">
       {#each disks as disk}

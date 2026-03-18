@@ -29,15 +29,37 @@ impl GpuInfo {
     }
 
     fn detect_amd() -> bool {
-        std::path::Path::new("/sys/class/drm/card0/device").exists()
+        if let Ok(entries) = std::fs::read_dir("/sys/class/drm") {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+                    if name.starts_with("card") {
+                        let vendor_path = path.join("device/vendor");
+                        if let Ok(content) = std::fs::read_to_string(&vendor_path) {
+                            if content.trim() == "0x1002" {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        false
     }
 
     fn detect_intel() -> bool {
-        for i in 0..10 {
-            let vendor_path = format!("/sys/class/drm/card{}/device/vendor", i);
-            if let Ok(content) = std::fs::read_to_string(&vendor_path) {
-                if content.trim() == "0x8086" {
-                    return true;
+        if let Ok(entries) = std::fs::read_dir("/sys/class/drm") {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+                    if name.starts_with("card") {
+                        let vendor_path = path.join("device/vendor");
+                        if let Ok(content) = std::fs::read_to_string(&vendor_path) {
+                            if content.trim() == "0x8086" {
+                                return true;
+                            }
+                        }
+                    }
                 }
             }
         }

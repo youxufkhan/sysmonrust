@@ -7,6 +7,8 @@ pub struct NetworkInfo {
     prev_rx: u64,
     prev_tx: u64,
     last_refresh: Instant,
+    total_rx: u64,
+    total_tx: u64,
 }
 
 impl NetworkInfo {
@@ -17,6 +19,8 @@ impl NetworkInfo {
             prev_rx: 0,
             prev_tx: 0,
             last_refresh: Instant::now(),
+            total_rx: 0,
+            total_tx: 0,
         };
         info.prime();
         info
@@ -50,20 +54,13 @@ impl NetworkInfo {
         self.prev_rx = total_rx;
         self.prev_tx = total_tx;
         self.last_refresh = Instant::now();
+        self.total_rx = total_rx;
+        self.total_tx = total_tx;
 
         (rx_speed, tx_speed)
     }
 
     pub fn total(&mut self) -> (u64, u64) {
-        self.networks.refresh();
-        let mut total_rx = 0u64;
-        let mut total_tx = 0u64;
-
-        for (_name, data) in self.networks.iter() {
-            total_rx += data.received();
-            total_tx += data.transmitted();
-        }
-
-        (total_rx, total_tx)
+        (self.total_rx, self.total_tx)
     }
 }
