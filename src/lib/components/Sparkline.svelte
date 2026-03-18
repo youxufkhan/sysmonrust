@@ -4,11 +4,12 @@
 
 	export let data: number[] = [];
 	export let color: string = '#3b82f6';
+	export let maxValue: number = 100;
 
 	let container: HTMLDivElement;
 	let chart: uPlot | null = null;
 	let localWidth = 200;
-	let localHeight = 48;
+	let localHeight = 80;
 
 	function createChart() {
 		if (!container || data.length < 2) return;
@@ -20,17 +21,24 @@
 			legend: { show: false },
 			scales: {
 				x: { time: false },
-				y: { auto: true }
+				y: { auto: false, min: 0, max: maxValue }
 			},
 			axes: [
 				{ show: false },
 				{
 					show: true,
 					size: 40,
-					values: (u, vals) => vals.map((v) => v.toFixed(0) + '%'),
-					grid: { show: true, stroke: 'rgba(255,255,255,0.05)' },
-					ticks: { show: false },
-					side: 1
+					grid: { show: true, stroke: 'rgba(255,255,255,0.1)', width: 1 },
+					ticks: { show: true, size: 4, stroke: 'rgba(255,255,255,0.2)' },
+					side: 1,
+					values: (u, vals) => {
+						return vals.map((v) => {
+							if (v === 0) return '0';
+							if (v === maxValue) return maxValue.toString();
+							if (maxValue === 100 && v === 50) return '50';
+							return '';
+						});
+					}
 				}
 			],
 			series: [
@@ -96,6 +104,6 @@
 <style>
 	.sparkline {
 		background: transparent;
-		min-height: 48px;
+		min-height: 80px;
 	}
 </style>
