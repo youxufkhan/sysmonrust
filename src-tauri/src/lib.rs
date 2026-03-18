@@ -1,5 +1,6 @@
 use serde::Serialize;
 pub mod metrics;
+pub mod tray;
 use metrics::{CpuInfo, DiskInfo, GpuInfo, MemoryInfo, NetworkInfo, TemperatureInfo};
 
 #[derive(Serialize)]
@@ -110,6 +111,10 @@ fn get_system_metrics() -> SystemMetrics {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .setup(|app| {
+            let _ = tray::setup_tray(app);
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![get_system_metrics])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
