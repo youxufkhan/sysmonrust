@@ -2,8 +2,10 @@
   import MetricCard from './MetricCard.svelte';
   import Badge from './ui/badge.svelte';
   import Progress from './ui/progress.svelte';
-  import { metrics } from '$lib/stores/metrics';
+  import { metrics, historyStore } from '$lib/stores/metrics';
   import { formatBytes, formatPercent, formatTemp } from '$lib/utils/formatters';
+  import { getThresholdColor } from '$lib/utils/thresholds';
+  import Sparkline from '$lib/components/Sparkline.svelte';
   
   let gpu = $derived($metrics?.gpu);
 </script>
@@ -17,7 +19,12 @@
   </div>
   
   {#if gpu}
-    <div class="space-y-3">
+    <div class="text-xl font-bold">{gpu.name}</div>
+    <div class="text-2xl font-bold mt-1">{formatPercent(gpu.utilization)}</div>
+    <div class="mt-2">
+      <Sparkline data={historyStore.gpu} color={getThresholdColor(gpu.utilization)} width={120} height={40} />
+    </div>
+    <div class="space-y-3 mt-3">
       <div class="text-xl font-bold">{gpu.name}</div>
       
       <div>
