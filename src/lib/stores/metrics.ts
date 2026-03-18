@@ -62,6 +62,7 @@ function createMetricsStore() {
         try {
           const data = await invoke<SystemMetrics>('get_system_metrics');
           set(data);
+          updateHistory(data);
         } catch (e) {
           console.error('Failed to fetch metrics:', e);
         }
@@ -80,3 +81,44 @@ function createMetricsStore() {
 }
 
 export const metrics = createMetricsStore();
+
+const MAX_HISTORY_POINTS = 60;
+
+export const historyStore = {
+  cpu: [] as number[],
+  memory: [] as number[],
+  networkRx: [] as number[],
+  networkTx: [] as number[],
+  disk: [] as number[],
+  gpu: [] as number[],
+};
+
+export function pushHistory(store: number[], value: number) {
+  if (store.length >= MAX_HISTORY_POINTS) {
+    store.shift();
+  }
+  store.push(value);
+}
+
+function updateHistory(metrics: SystemMetrics) {
+  pushHistory(historyStore.cpu, metrics.cpu.global);
+  
+  const memUsedPct = metrics.memory.total > 0
+    ? (metrics.memory.used / metrics.memory.total) * 100
+    : 0;
+  pushHistory(historyStore.memory, memUsedPct);
+  
+  pushHistory(historyStore.networkRx, metrics.network.rx_speed);
+  pushHistory(historyStore.networkTx, metrics.network.tx_speed);
+  
+  if (metrics.disk.length > 0) {
+    const diskUsedPct = metrics.disk[0].total > 0
+      ? (metrics.disk[0].used / metrics.disk[0].total) * 100
+      : 0;
+    pushHistory(historyStore.disk, diskUsedPct);
+  }
+  
+  if (metrics.gpu) {
+    pushHistory(historyStore.gpu, metrics.gpu.utilization);
+  }
+}
