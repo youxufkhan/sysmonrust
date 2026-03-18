@@ -165,7 +165,7 @@ fn get_system_metrics(state: tauri::State<'_, Mutex<AppState>>) -> SystemMetrics
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .manage(AppState::new())
+        .manage(Mutex::new(AppState::new()))
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             let _ = tray::setup_tray(app);
