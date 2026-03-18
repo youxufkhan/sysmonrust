@@ -4,18 +4,18 @@
 
 	export let data: number[] = [];
 	export let color: string = '#3b82f6';
-	export let width: number = 120;
-	export let height: number = 40;
 
 	let container: HTMLDivElement;
 	let chart: uPlot | null = null;
+	let localWidth = 200;
+	let localHeight = 48;
 
 	function createChart() {
 		if (!container || data.length < 2) return;
 
 		const opts: uPlot.Options = {
-			width,
-			height,
+			width: localWidth,
+			height: localHeight,
 			cursor: { show: false },
 			legend: { show: false },
 			scales: {
@@ -24,14 +24,21 @@
 			},
 			axes: [
 				{ show: false },
-				{ show: false }
+				{
+					show: true,
+					size: 40,
+					values: (u, vals) => vals.map((v) => v.toFixed(0) + '%'),
+					grid: { show: true, stroke: 'rgba(255,255,255,0.05)' },
+					ticks: { show: false },
+					side: 1
+				}
 			],
 			series: [
 				{},
 				{
 					stroke: color,
 					width: 1.5,
-					fill: 'transparent',
+					fill: `${color}20`,
 					points: { show: false }
 				}
 			]
@@ -47,8 +54,26 @@
 		}
 	}
 
+	function updateSize() {
+		if (chart && localWidth > 0) {
+			chart.setSize({ width: localWidth, height: localHeight });
+		}
+	}
+
 	onMount(() => {
 		createChart();
+
+		const ro = new ResizeObserver((entries) => {
+			for (const entry of entries) {
+				localWidth = Math.floor(entry.contentRect.width);
+				updateSize();
+			}
+		});
+		if (container) ro.observe(container);
+
+		return () => {
+			ro.disconnect();
+		};
 	});
 
 	onDestroy(() => {
@@ -64,17 +89,13 @@
 		destroyChart();
 		createChart();
 	}
-
-	$: if (chart && (width || height)) {
-		destroyChart();
-		createChart();
-	}
 </script>
 
-<div bind:this={container} class="sparkline"></div>
+<div bind:this={container} class="sparkline w-full"></div>
 
 <style>
 	.sparkline {
 		background: transparent;
+		min-height: 48px;
 	}
 </style>

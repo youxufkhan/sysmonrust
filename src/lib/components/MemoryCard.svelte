@@ -1,6 +1,5 @@
 <script lang="ts">
   import MetricCard from './MetricCard.svelte';
-  import Progress from './ui/progress.svelte';
   import { metrics, memoryHistory } from '$lib/stores/metrics';
   import { formatBytes, formatPercent } from '$lib/utils/formatters';
   import { getThresholdColor } from '$lib/utils/thresholds';
@@ -9,7 +8,6 @@
   let mem = $derived($metrics?.memory);
   
   let memPercent = $derived(mem ? (mem.used / mem.total) * 100 : 0);
-  let swapPercent = $derived(mem?.swap_total ? (mem.swap_used / mem.swap_total) * 100 : 0);
 </script>
 
 <MetricCard>
@@ -18,12 +16,9 @@
   {#if mem}
     <div class="text-3xl font-bold">{formatPercent(memPercent)}</div>
     <div class="mt-2">
-      <Sparkline data={$memoryHistory} color={getThresholdColor(memPercent)} width={120} height={40} />
+      <Sparkline data={$memoryHistory} color={getThresholdColor(memPercent)} />
     </div>
-    <div class="mt-3">
-      <Progress value={memPercent} class="mb-3" />
-    </div>
-    <div class="text-sm space-y-1">
+    <div class="text-sm space-y-1 mt-3">
       <div class="flex justify-between">
         <span class="text-muted-foreground">Used</span>
         <span>{formatBytes(mem.used)}</span>
