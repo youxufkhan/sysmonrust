@@ -4,7 +4,7 @@
   import { metrics, gpuHistory } from '$lib/stores/metrics';
   import { formatBytes, formatPercent, formatTemp } from '$lib/utils/formatters';
   import { getThresholdColor } from '$lib/utils/thresholds';
-  import Sparkline from '$lib/components/Sparkline.svelte';
+  import SparklineChart from '$lib/components/charts/SparklineChart.svelte';
   
   let gpu = $derived($metrics?.gpu);
 </script>
@@ -20,7 +20,7 @@
   {#if gpu}
     <div class="text-2xl font-bold">{formatPercent(gpu.utilization)}</div>
     <div class="mt-2">
-      <Sparkline data={$gpuHistory} color={getThresholdColor(gpu.utilization)} />
+      <SparklineChart data={$gpuHistory} color={getThresholdColor(gpu.utilization)} />
     </div>
     <div class="text-sm space-y-1 mt-3">
       <div class="flex justify-between">

@@ -3,7 +3,7 @@
   import { metrics, diskHistory } from '$lib/stores/metrics';
   import { formatBytes, formatPercent } from '$lib/utils/formatters';
   import { getThresholdColor } from '$lib/utils/thresholds';
-  import Sparkline from '$lib/components/Sparkline.svelte';
+  import SparklineChart from '$lib/components/charts/SparklineChart.svelte';
   
   let disks = $derived($metrics?.disk ?? []);
   let firstDiskPercent = $derived(disks.length > 0 ? (disks[0].used / disks[0].total) * 100 : 0);
@@ -16,7 +16,7 @@
     {@const usedPercent = (disks[0].used / disks[0].total) * 100}
     <div class="text-3xl font-bold">{formatPercent(usedPercent)}</div>
     <div class="mt-2">
-      <Sparkline data={$diskHistory} color={getThresholdColor(usedPercent)} />
+      <SparklineChart data={$diskHistory} color={getThresholdColor(usedPercent)} />
     </div>
     <div class="space-y-2 mt-3">
       {#each disks as disk}

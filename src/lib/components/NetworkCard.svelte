@@ -3,7 +3,7 @@
   import Badge from './ui/badge.svelte';
   import { metrics, networkRxHistory, networkTxHistory } from '$lib/stores/metrics';
   import { formatSpeed, formatBytes } from '$lib/utils/formatters';
-  import Sparkline from '$lib/components/Sparkline.svelte';
+  import SparklineChart from '$lib/components/charts/SparklineChart.svelte';
   
   let net = $derived($metrics?.network);
 </script>
@@ -20,7 +20,7 @@
         </div>
         <Badge variant="secondary">{formatSpeed(net.rx_speed)}</Badge>
       </div>
-      <Sparkline data={$networkRxHistory} color="#22c55e" />
+      <SparklineChart data={$networkRxHistory} color="#22c55e" />
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <span class="text-blue-500">↑</span>
@@ -28,7 +28,7 @@
         </div>
         <Badge variant="secondary">{formatSpeed(net.tx_speed)}</Badge>
       </div>
-      <Sparkline data={$networkTxHistory} color="#3b82f6" />
+      <SparklineChart data={$networkTxHistory} color="#3b82f6" />
       <div class="border-t pt-2 mt-2 text-sm">
         <div class="flex justify-between text-muted-foreground">
           <span>Total down</span>

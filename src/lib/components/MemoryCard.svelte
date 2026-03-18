@@ -3,7 +3,7 @@
   import { metrics, memoryHistory } from '$lib/stores/metrics';
   import { formatBytes, formatPercent } from '$lib/utils/formatters';
   import { getThresholdColor } from '$lib/utils/thresholds';
-  import Sparkline from '$lib/components/Sparkline.svelte';
+  import SparklineChart from '$lib/components/charts/SparklineChart.svelte';
   
   let mem = $derived($metrics?.memory);
   
@@ -16,7 +16,7 @@
   {#if mem}
     <div class="text-3xl font-bold">{formatPercent(memPercent)}</div>
     <div class="mt-2">
-      <Sparkline data={$memoryHistory} color={getThresholdColor(memPercent)} />
+      <SparklineChart data={$memoryHistory} color={getThresholdColor(memPercent)} />
     </div>
     <div class="text-sm space-y-1 mt-3">
       <div class="flex justify-between">

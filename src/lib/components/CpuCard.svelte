@@ -4,7 +4,7 @@
   import { metrics, cpuHistory } from '$lib/stores/metrics';
   import { formatPercent, formatMHz } from '$lib/utils/formatters';
   import { getThresholdColor } from '$lib/utils/thresholds';
-  import Sparkline from '$lib/components/Sparkline.svelte';
+  import SparklineChart from '$lib/components/charts/SparklineChart.svelte';
   
   let cpu = $derived($metrics?.cpu);
 </script>
@@ -20,7 +20,7 @@
   {#if cpu}
     <div class="text-3xl font-bold">{formatPercent(cpu.global)}</div>
     <div class="mt-2">
-      <Sparkline data={$cpuHistory} color={getThresholdColor(cpu.global)} />
+      <SparklineChart data={$cpuHistory} color={getThresholdColor(cpu.global)} />
     </div>
   {:else}
     <div class="animate-pulse">Loading...</div>
