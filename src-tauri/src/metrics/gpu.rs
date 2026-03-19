@@ -1,5 +1,6 @@
 use nvml_wrapper::Nvml;
 
+#[derive(Debug, PartialEq)]
 pub enum GpuType {
     Nvidia,
     Amd,
@@ -8,7 +9,7 @@ pub enum GpuType {
 }
 
 pub struct GpuInfo {
-    gpu_type: GpuType,
+    pub gpu_type: GpuType,
     nvml: Option<Nvml>,
 }
 
@@ -85,6 +86,89 @@ impl GpuInfo {
             temperature: temp.unwrap_or(0) as i32,
         })
     }
+
+    /// Returns Intel GPU metrics by reading from sysfs.
+    /// - Utilization: /sys/class/drm/card*/device/gpu_busy_percent
+    /// - Temperature: /sys/class/drm/card*/device/hwmon/*/temp1_input (millidegrees / 1000)
+    pub fn intel_metrics(&mut self) -> Option<IntelGpuMetrics> {
+        if self.gpu_type != GpuType::Intel {
+            return None;
+        }
+
+        let mut utilization = 0u32;
+        let mut temperature = 0i32;
+        let mut memory_used = 0u64;
+        let memory_total = 0u64;
+
+        // Find the Intel DRM device path
+        if let Ok(entries) = std::fs::read_dir("/sys/class/drm") {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+                    if name.starts_with("card") {
+                        let vendor_path = path.join("device/vendor");
+                        if let Ok(content) = std::fs::read_to_string(&vendor_path) {
+                            if content.trim() == "0x8086" {
+                                // Found Intel GPU
+
+                                // Utilization
+                                let busy_path = path.join("device/gpu_busy_percent");
+                                if let Ok(content) = std::fs::read_to_string(&busy_path) {
+                                    utilization = content.trim().parse().unwrap_or(0);
+                                }
+
+                                // Temperature via hwmon
+                                let hwmon_path = path.join("device/hwmon");
+                                if let Ok(hwmon_entries) = std::fs::read_dir(&hwmon_path) {
+                                    for hwmon_entry in hwmon_entries.flatten() {
+                                        let temp_path = hwmon_entry.path().join("temp1_input");
+                                        if let Ok(content) = std::fs::read_to_string(&temp_path) {
+                                            // Convert millidegrees to Celsius
+                                            if let Ok(millideg) = content.trim().parse::<i32>() {
+                                                temperature = millideg / 1000;
+                                            }
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                // Memory info from gem_pages
+                                let gem_path = path.join("device/gem_pages");
+                                if let Ok(content) = std::fs::read_to_string(&gem_path) {
+                                    if let Ok(pages) = content.trim().parse::<u64>() {
+                                        // Each page is typically 4096 bytes
+                                        memory_used = pages * 4096;
+                                    }
+                                }
+
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Some(IntelGpuMetrics {
+            utilization,
+            temperature,
+            memory_used,
+            memory_total,
+        })
+    }
+
+    /// Returns the GPU device name, or a placeholder string if unavailable.
+    pub fn name(&self) -> String {
+        let nvml = match &self.nvml {
+            Some(n) => n,
+            None => return String::new(),
+        };
+        let device = match nvml.device_by_index(0) {
+            Ok(d) => d,
+            Err(_) => return String::new(),
+        };
+        device.name().unwrap_or_default()
+    }
 }
 
 pub struct NvidiaGpuMetrics {
@@ -92,4 +176,11 @@ pub struct NvidiaGpuMetrics {
     pub memory_used: u64,
     pub memory_total: u64,
     pub temperature: i32,
+}
+
+pub struct IntelGpuMetrics {
+    pub utilization: u32,
+    pub temperature: i32,
+    pub memory_used: u64,
+    pub memory_total: u64,
 }

@@ -2,7 +2,7 @@ use serde::Serialize;
 use std::sync::Mutex;
 pub mod metrics;
 pub mod tray;
-use metrics::{CpuInfo, DiskInfo, MemoryInfo, NetworkInfo, TemperatureInfo};
+use metrics::{CpuInfo, DiskInfo, GpuInfo, GpuType, MemoryInfo, NetworkInfo, TemperatureInfo};
 
 #[derive(Serialize)]
 pub struct SystemMetrics {
@@ -68,6 +68,7 @@ pub struct AppState {
     pub network: Mutex<NetworkInfo>,
     pub disk: Mutex<DiskInfo>,
     pub temp: Mutex<TemperatureInfo>,
+    pub gpu: Mutex<GpuInfo>,
 }
 
 impl AppState {
@@ -82,6 +83,7 @@ impl AppState {
             network: Mutex::new(NetworkInfo::new()),
             disk: Mutex::new(DiskInfo::new()),
             temp: Mutex::new(TemperatureInfo::new()),
+            gpu: Mutex::new(GpuInfo::new()),
         }
     }
 }
@@ -128,6 +130,30 @@ fn get_system_metrics(state: tauri::State<'_, Mutex<AppState>>) -> SystemMetrics
         t.get_cpu_temp()
     };
 
+    // GPU metrics
+    let gpu = {
+        let mut g = state.gpu.lock().unwrap();
+        match g.gpu_type {
+            GpuType::Nvidia => g.nvidia_metrics().map(|m| GpuMetrics {
+                name: g.name(),
+                gpu_type: format!("{:?}", g.gpu_type),
+                utilization: m.utilization,
+                memory_used: m.memory_used,
+                memory_total: m.memory_total,
+                temperature: m.temperature,
+            }),
+            GpuType::Intel => g.intel_metrics().map(|m| GpuMetrics {
+                name: "Intel Graphics".to_string(),
+                gpu_type: "Intel".to_string(),
+                utilization: m.utilization,
+                memory_used: m.memory_used,
+                memory_total: m.memory_total,
+                temperature: m.temperature,
+            }),
+            _ => None,
+        }
+    };
+
     // Build response
     SystemMetrics {
         cpu: CpuMetrics {
@@ -157,7 +183,7 @@ fn get_system_metrics(state: tauri::State<'_, Mutex<AppState>>) -> SystemMetrics
                 available: p.available,
             })
             .collect(),
-        gpu: None,
+        gpu,
         temperature: temp.map(|t| TemperatureMetrics { cpu: t }),
     }
 }
