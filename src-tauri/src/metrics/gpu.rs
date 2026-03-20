@@ -88,7 +88,7 @@ impl GpuInfo {
     }
 
     /// Returns Intel GPU metrics by reading from sysfs.
-    /// - Utilization: /sys/class/drm/card*/device/gpu_busy_percent
+    /// - Utilization: Derived from GPU frequency (gt_act_freq_mhz as proxy)
     /// - Temperature: /sys/class/drm/card*/device/hwmon/*/temp1_input (millidegrees / 1000)
     pub fn intel_metrics(&mut self) -> Option<IntelGpuMetrics> {
         if self.gpu_type != GpuType::Intel {
@@ -111,10 +111,29 @@ impl GpuInfo {
                             if content.trim() == "0x8086" {
                                 // Found Intel GPU
 
-                                // Utilization
-                                let busy_path = path.join("device/gpu_busy_percent");
-                                if let Ok(content) = std::fs::read_to_string(&busy_path) {
-                                    utilization = content.trim().parse().unwrap_or(0);
+                                // Read frequency values for activity proxy
+                                let min_freq: u32 =
+                                    std::fs::read_to_string(&path.join("gt_min_freq_mhz"))
+                                        .ok()
+                                        .and_then(|s| s.trim().parse().ok())
+                                        .unwrap_or(200);
+                                let max_freq: u32 =
+                                    std::fs::read_to_string(&path.join("gt_max_freq_mhz"))
+                                        .ok()
+                                        .and_then(|s| s.trim().parse().ok())
+                                        .unwrap_or(1150);
+                                let act_freq: u32 =
+                                    std::fs::read_to_string(&path.join("gt_act_freq_mhz"))
+                                        .ok()
+                                        .and_then(|s| s.trim().parse().ok())
+                                        .unwrap_or(min_freq);
+
+                                // Calculate utilization from frequency ratio
+                                if act_freq > min_freq && max_freq > min_freq {
+                                    utilization = ((act_freq - min_freq) as f64
+                                        / (max_freq - min_freq) as f64
+                                        * 100.0)
+                                        as u32;
                                 }
 
                                 // Temperature via hwmon
@@ -123,7 +142,6 @@ impl GpuInfo {
                                     for hwmon_entry in hwmon_entries.flatten() {
                                         let temp_path = hwmon_entry.path().join("temp1_input");
                                         if let Ok(content) = std::fs::read_to_string(&temp_path) {
-                                            // Convert millidegrees to Celsius
                                             if let Ok(millideg) = content.trim().parse::<i32>() {
                                                 temperature = millideg / 1000;
                                             }
@@ -136,7 +154,6 @@ impl GpuInfo {
                                 let gem_path = path.join("device/gem_pages");
                                 if let Ok(content) = std::fs::read_to_string(&gem_path) {
                                     if let Ok(pages) = content.trim().parse::<u64>() {
-                                        // Each page is typically 4096 bytes
                                         memory_used = pages * 4096;
                                     }
                                 }
