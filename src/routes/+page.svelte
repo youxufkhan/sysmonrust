@@ -13,9 +13,9 @@
   });
 </script>
 
-<div class="p-4 min-h-screen bg-background text-foreground">
-  <h1 class="text-xl font-bold mb-4">sysmonrust</h1>
-  <div class="grid grid-cols-2 gap-4">
+<div class="p-4 h-screen overflow-hidden bg-background text-foreground">
+  <h1 class="text-xl font-bold">sysmonrust</h1>
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
     <CpuCard />
     <MemoryCard />
     <NetworkCard />

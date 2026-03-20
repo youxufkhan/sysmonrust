@@ -9,7 +9,7 @@
   let cpu = $derived($metrics?.cpu);
 </script>
 
-<MetricCard class="col-span-2">
+<MetricCard class="sm:col-span-2">
   <div class="flex items-center justify-between mb-2">
     <h3 class="text-sm font-semibold">CPU</h3>
     {#if cpu}

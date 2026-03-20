@@ -29,9 +29,9 @@
 	);
 
 	// SVG dimensions
-	const width = 200;
-	const height = 80;
-	const padding = { top: 5, right: 5, bottom: 5, left: 40 };
+	const width = 160;
+	const height = 60;
+	const padding = { top: 5, right: 5, bottom: 5, left: 28 };
 
 	// Generate smooth curve path data
 	const pathData = $derived.by(() => {
@@ -66,9 +66,9 @@
 	const gradientId = $derived(`sparkline-${Math.random().toString(36).slice(2, 9)}`);
 </script>
 
-<div class={cn('h-[80px] w-full', className)}>
+<div class={cn('h-full min-h-[80px] w-full', className)}>
 	{#if data.length >= 2}
-		<svg {width} {height} class="w-full h-full">
+		<svg viewBox="0 0 {width} {height}" preserveAspectRatio="none" class="w-full h-full">
 			<defs>
 				<linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
 					<stop offset="0%" stop-color={activeColor} stop-opacity="0.8" />
@@ -78,7 +78,7 @@
 			<path d={areaPath} fill="url(#{gradientId})" />
 			<path d={pathData} fill="none" stroke={activeColor} stroke-width="1.5" />
 			<text
-				x={padding.left - 8}
+				x={padding.left - 6}
 				y={padding.top + 8}
 				text-anchor="end"
 				class="text-[11px] fill-muted-foreground"

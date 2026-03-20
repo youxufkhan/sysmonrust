@@ -12,11 +12,12 @@
   "app": {
     "windows": [{
       "title": "sysmonrust",
-      "width": 800,
-      "height": 500,
+      "width": 300,
+      "height": 600,
       "resizable": true,
-      "minWidth": 600,
-      "minHeight": 400
+      "minWidth": 200,
+      "minHeight": 400,
+      "center": true
     }],
     "security": {
       "csp": null
